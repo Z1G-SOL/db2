@@ -1,5 +1,25 @@
-protected $fillable = ['customer_id','user_id','order_date','total_amount'];
+<?php
 
-public function items() {
-    return $this->hasMany(OrderItem::class);
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Order extends Model
+{
+    protected $fillable = ['customer_id', 'user_id', 'order_date', 'total_amount', 'shipment_status'];
+
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -1,7 +1,12 @@
+<?php
+
+namespace App\Http\Controllers;
+
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\OrderItem;
 use App\Models\Customer;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -19,17 +24,18 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            $customer = Customer::firstOrCreate([
-                'phone' => $request->phone
-            ],[
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name
-            ]);
+            $customer = Customer::firstOrCreate(
+                ['phone' => $request->phone],
+                [
+                    'first_name' => $request->first_name,
+                    'last_name'  => $request->last_name,
+                ]
+            );
 
             $order = Order::create([
                 'customer_id' => $customer->id,
-                'user_id' => Auth::id(),
-                'order_date' => now()
+                'user_id'     => Auth::id(),
+                'order_date'  => now(),
             ]);
 
             $total = 0;
@@ -40,30 +46,30 @@ class OrderController extends Controller
                 $product = Product::find($p['id']);
 
                 if ($product->stock_qty < $p['qty']) {
-                    throw new \Exception("Stock error");
+                    throw new \Exception("Not enough stock for {$product->product_name}.");
                 }
 
                 $subtotal = $product->price * $p['qty'];
 
                 OrderItem::create([
-                    'order_id'=>$order->id,
-                    'product_id'=>$p['id'],
-                    'quantity'=>$p['qty'],
-                    'subtotal'=>$subtotal
+                    'order_id'   => $order->id,
+                    'product_id' => $p['id'],
+                    'quantity'   => $p['qty'],
+                    'subtotal'   => $subtotal,
                 ]);
 
                 $product->decrement('stock_qty', $p['qty']);
                 $total += $subtotal;
             }
 
-            $order->update(['total_amount'=>$total]);
+            $order->update(['total_amount' => $total]);
 
             DB::commit();
-            return back()->with('success','Order success');
+            return back()->with('success', 'Order placed successfully.');
 
         } catch (\Exception $e) {
-            DB::rollback();
-            return back()->with('error',$e->getMessage());
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
         }
     }
 }
