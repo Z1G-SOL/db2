@@ -1,0 +1,1 @@
+protected $fillable = ['product_name','category','price','stock_qty'];
